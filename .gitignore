@@ -1,0 +1,6 @@
+dist/
+__pycache__/
+.pytest_cache/
+.venv/
+seo-report.md
+seo-title.txt
