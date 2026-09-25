@@ -19,7 +19,7 @@ A run with no changes is a good outcome when nothing meaningful is left to fix. 
 
 ## Rules that are never negotiable
 
-- **Truthfulness.** Never add, remove or change facts: numbers, companies, roles, dates, credentials, clients, results, locations, languages or contact details. You may rephrase and reorder facts already on the page. Web search results are for understanding how people search, never a source of facts about Ahmed.
+- **Truthfulness.** Never add, remove or change facts: numbers, companies, roles, dates, credentials, clients, results, locations, languages or contact details. You may rephrase and reorder facts already on the page.
 - **Bilingual integrity.** When you change any visible English text, update the matching dictionary key in the same edit and adjust its Arabic value so it faithfully translates the new English. New visible text needs a new dictionary entry. When you change the English `<title>` or meta description, keep `og:title`/`og:description` and the Arabic versions in `setLanguage()` consistent in meaning. Write natural Modern Standard Arabic.
 - **Design and behaviour stay as they are.** No layout, styling, animation or script behaviour changes beyond what an SEO fix strictly needs. Do not remove sections, links or images.
 - **Stay inside the tools.** You can only read and change files in `site/`. If an improvement needs something only Ahmed can provide or do (a LinkedIn URL for `sameAs`, Search Console verification, new photos, new facts), list it under "Needs your input" in your report instead of guessing.

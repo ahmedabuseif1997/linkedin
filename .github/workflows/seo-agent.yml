@@ -1,6 +1,6 @@
 name: SEO agent
 
-# Weekly: Claude audits and improves site/, and opens a pull request for review.
+# Weekly: the MiniMax-powered agent audits and improves site/, and opens a pull request for review.
 # Nothing is published until that pull request is merged into main.
 on:
   schedule:
@@ -55,11 +55,10 @@ jobs:
       - name: Run SEO agent
         if: steps.open.outputs.count == '0'
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          SEO_AGENT_INSTRUCTIONS: ${{ inputs.instructions }}
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          MINIMAX_BASE_URL: ${{ vars.MINIMAX_BASE_URL }}
           SEO_AGENT_MODEL: ${{ vars.SEO_AGENT_MODEL }}
-          SEO_AGENT_EFFORT: ${{ vars.SEO_AGENT_EFFORT }}
-          SEO_AGENT_WEB_SEARCH: ${{ vars.SEO_AGENT_WEB_SEARCH }}
+          SEO_AGENT_INSTRUCTIONS: ${{ inputs.instructions }}
         run: python -m seo_agent
 
       - name: Gate - build and audit the proposed site

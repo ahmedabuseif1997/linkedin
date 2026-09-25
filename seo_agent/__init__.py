@@ -1,1 +1,1 @@
-"""Claude-powered SEO agent for the portfolio site."""
+"""MiniMax-powered SEO agent for the portfolio site."""

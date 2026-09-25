@@ -1,6 +1,6 @@
 # Ahmed Abouseif — portfolio website
 
-Bilingual (English/Arabic) executive portfolio, published at **https://ahmedabouseif.com/** with GitHub Pages, plus a Claude-powered SEO agent that proposes improvements every week as a pull request.
+Bilingual (English/Arabic) executive portfolio, published at **https://ahmedabouseif.com/** with GitHub Pages, plus a MiniMax-powered SEO agent that proposes improvements every week as a pull request.
 
 ## Repository layout
 
@@ -44,12 +44,11 @@ Bilingual (English/Arabic) executive portfolio, published at **https://ahmedabou
 Source: [Managing a custom domain for your GitHub Pages site](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site).
 
 ### 3. Turn on the SEO agent
-1. Create an API key in the [Anthropic Console](https://console.anthropic.com/) and add it as a repository secret named `ANTHROPIC_API_KEY` (**Settings → Secrets and variables → Actions → New repository secret**). Setting a monthly spend limit in the Console is recommended.
+1. Create an API key on the [MiniMax platform](https://platform.minimax.io/) (mainland China accounts: [platform.minimaxi.com](https://platform.minimaxi.com/)) and add it as a repository secret named `MINIMAX_API_KEY` (**Settings → Secrets and variables → Actions → New repository secret**).
 2. **Settings → Actions → General → Workflow permissions**: tick **Allow GitHub Actions to create and approve pull requests** (the agent needs this to open its pull request).
 3. Optional repository variables (**Settings → Secrets and variables → Actions → Variables**):
-   - `SEO_AGENT_MODEL` — model ID (default `claude-opus-5`).
-   - `SEO_AGENT_EFFORT` — `low`, `medium`, `high` (default), `xhigh` or `max`. Lower is cheaper.
-   - `SEO_AGENT_WEB_SEARCH` — set to `0` to turn off web search.
+   - `SEO_AGENT_MODEL` — MiniMax model ID (default `MiniMax-M3`).
+   - `MINIMAX_BASE_URL` — only for mainland China accounts: `https://api.minimaxi.com/v1` (default `https://api.minimax.io/v1`).
 
 ### 4. Tell search engines about the site
 1. [Google Search Console](https://search.google.com/search-console): add a **Domain** property for `ahmedabouseif.com` (verified with a DNS TXT record), then submit `https://ahmedabouseif.com/sitemap.xml` under **Sitemaps**.
@@ -61,13 +60,13 @@ Source: [Managing a custom domain for your GitHub Pages site](https://docs.githu
 Every Monday at 09:17 Dubai time (or on demand: **Actions → SEO agent → Run workflow**, with optional extra instructions):
 
 1. It builds and audits the current site, and reads recent changes so it does not undo them.
-2. Claude reviews the page, can check the live site and research how people search (up to 3 web searches per request), and edits files in `site/` only.
+2. The MiniMax model reviews the page, can check the live site, and edits files in `site/` only.
 3. Before it can finish, its changes must pass validation: the site builds, no new audit errors, no English text left without an Arabic translation, and the protected facts (metric numbers, email, phone, WhatsApp, section anchors) are unchanged.
 4. The workflow re-runs the build and audit, then opens a pull request describing each change and why. **Nothing goes live until you merge it.**
 
 No pull request is opened when there is nothing worth changing, and a run is skipped while a previous SEO pull request is still open. Each pull request lists the tokens the run used.
 
-The agent calls Claude Opus 5 with adaptive thinking. Server-side fallback is enabled (`fallbacks: "default"`): if Claude Opus 5's safety classifier declines a request, the API retries it on Anthropic's recommended fallback model instead of failing the run.
+The agent calls MiniMax's OpenAI-compatible Chat Completions API (`MiniMax-M3` by default) with `reasoning_split` enabled, and sends the model's reasoning back with each step as MiniMax requires for multi-step tool use.
 
 ## Local development
 
@@ -78,7 +77,7 @@ python -m http.server -d dist 8000          # preview at http://localhost:8000
 python -m site_tools.audit                  # SEO audit of dist/
 python -m pytest                            # tests
 python -m seo_agent --dry-run               # show what the agent would start from (no API call)
-ANTHROPIC_API_KEY=... python -m seo_agent   # full agent run; writes seo-report.md and seo-title.txt
+MINIMAX_API_KEY=... python -m seo_agent     # full agent run; writes seo-report.md and seo-title.txt
 ```
 
 ## Editing the site by hand
