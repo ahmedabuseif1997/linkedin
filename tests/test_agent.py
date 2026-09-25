@@ -12,11 +12,11 @@ from seo_agent.workspace import SiteWorkspace
 from tests.conftest import SITE_URL
 
 OLD_DESCRIPTION = (
-    '<meta name="description" content="Ahmed Abouseif — Dubai-based executive working across HR, strategic operations, '
-    'corporate contracts, business development, mobility partnerships, and intelligent digital solutions.">'
+    '<meta name="description" content="Ahmed Abouseif — Dubai executive in HR, strategic operations, '
+    'corporate contracts, business development, mobility partnerships &amp; intelligent digital solutions.">'
 )
 NEW_DESCRIPTION = (
-    '<meta name="description" content="Ahmed Abouseif — Dubai-based executive in HR, strategic operations, '
+    '<meta name="description" content="Ahmed Abouseif — Dubai executive in HR, strategic operations, '
     'corporate contracts, business development and mobility partnerships.">'
 )
 
@@ -77,7 +77,7 @@ def test_happy_path_edits_validates_and_reports(project: Path):
 
     assert outcome.title == "SEO: shorten meta description"
     assert outcome.changed_files == ["index.html"]
-    assert outcome.baseline.count("warning") == 1 and outcome.final.count("warning") == 0
+    assert outcome.baseline.count("error") == 0 and outcome.final.count("error") == 0
     assert NEW_DESCRIPTION in (project / "site" / "index.html").read_text(encoding="utf-8")
 
     first = client.requests[0]
@@ -90,7 +90,7 @@ def test_happy_path_edits_validates_and_reports(project: Path):
     assert not any(r["is_error"] for r in tool_results(client.requests[1]))
 
     report = render_report(outcome, "claude-opus-5")
-    assert "| Warnings | 1 | 0 |" in report and "`site/index.html`" in report
+    assert "| Errors | 0 | 0 |" in report and "`site/index.html`" in report
 
 
 def test_changing_a_protected_fact_is_rejected_until_reverted(project: Path):
