@@ -43,8 +43,8 @@ def test_edit_requires_a_unique_exact_match(ws: SiteWorkspace, project: Path):
     with pytest.raises(ToolError, match="identical"):
         ws.edit_file("index.html", "<title>", "<title>")
 
-    ws.edit_file("index.html", "<title>Ahmed Abouseif — Executive Portfolio</title>", "<title>New title</title>")
-    assert "<title>New title</title>" in (project / "site" / "index.html").read_text(encoding="utf-8")
+    ws.edit_file("index.html", '<meta name="theme-color" content="#07110f">', '<meta name="theme-color" content="#000000">')
+    assert '<meta name="theme-color" content="#000000">' in (project / "site" / "index.html").read_text(encoding="utf-8")
 
 
 def test_create_file_rules(ws: SiteWorkspace, project: Path):
@@ -68,6 +68,6 @@ def test_fetch_is_limited_to_the_site_hosts(ws: SiteWorkspace):
 
 def test_snapshot_detects_changes(ws: SiteWorkspace):
     before = ws.snapshot()
-    ws.edit_file("index.html", "<title>Ahmed Abouseif — Executive Portfolio</title>", "<title>Changed</title>")
+    ws.edit_file("index.html", '<meta name="theme-color" content="#07110f">', '<meta name="theme-color" content="#000000">')
     after = ws.snapshot()
     assert [p for p in after if after[p] != before[p]] == ["index.html"]

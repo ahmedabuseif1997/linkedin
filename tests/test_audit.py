@@ -59,3 +59,21 @@ def test_changed_metric_changes_the_facts(project: Path):
 def test_dictionary_parser_handles_escaped_quotes():
     html = "<script>\n    const arabic = {\n      'It\\'s':'نعم','A & B':'أ و ب'\n    };\n</script>"
     assert parse_translation_dictionary(html) == {"It's": "نعم", "A & B": "أ و ب"}
+
+
+def test_hreflang_to_the_same_url_is_a_warning(project: Path):
+    tags = ('<link rel="alternate" hreflang="en" href="{{SITE_URL}}">\n'
+            '  <link rel="alternate" hreflang="ar" href="{{SITE_URL}}">\n'
+            '  <meta property="og:locale:alternate" content="ar_AE">\n')
+    result = build_and_audit(project, lambda html: html.replace('<link rel="canonical" href="{{SITE_URL}}">\n',
+                                                                '<link rel="canonical" href="{{SITE_URL}}">\n  ' + tags, 1))
+    assert {"hreflang", "og-locale"} <= checks(result, "warning")
+
+
+def test_hreflang_to_separate_language_urls_is_fine(project: Path):
+    tags = ('<link rel="alternate" hreflang="en" href="{{SITE_URL}}">\n'
+            '  <link rel="alternate" hreflang="ar" href="{{SITE_URL}}ar/">\n'
+            '  <meta property="og:locale:alternate" content="ar_AE">\n')
+    result = build_and_audit(project, lambda html: html.replace('<link rel="canonical" href="{{SITE_URL}}">\n',
+                                                                '<link rel="canonical" href="{{SITE_URL}}">\n  ' + tags, 1))
+    assert not {"hreflang", "og-locale"} & checks(result, "warning")
