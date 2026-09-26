@@ -188,3 +188,19 @@ def test_missing_api_key_fails_fast(monkeypatch, capsys):
     monkeypatch.delenv("MINIMAX_API_KEY", raising=False)
     assert main([]) == 2
     assert "MINIMAX_API_KEY is not set" in capsys.readouterr().err
+
+
+def test_new_audit_warnings_are_rejected(project: Path):
+    canonical = '<link rel="canonical" href="{{SITE_URL}}">'
+    with_hreflang = canonical + '\n  <link rel="alternate" hreflang="en" href="{{SITE_URL}}">' \
+                                '\n  <link rel="alternate" hreflang="ar" href="{{SITE_URL}}">'
+    agent, client = make_agent(project, [
+        completion([("t1", "edit_site_file", {"path": "index.html", "old_string": canonical, "new_string": with_hreflang})]),
+        completion([("t2", "submit_report", {"title": "SEO: hreflang", "summary": "x"})]),
+        completion([("t3", "edit_site_file", {"path": "index.html", "old_string": with_hreflang, "new_string": canonical})]),
+        completion([("t4", "submit_report", {"title": "SEO: none", "summary": "none"})]),
+    ])
+    outcome = agent.run()
+    rejection = tool_messages(client.requests[2])[0]["content"]
+    assert rejection.startswith("ERROR: Validation failed") and "New audit warning — hreflang" in rejection
+    assert outcome.changed_files == []

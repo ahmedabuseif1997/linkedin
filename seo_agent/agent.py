@@ -256,8 +256,9 @@ class SeoAgent:
             problems.append(f"The build fails: {error}")
         if final is not None:
             known = {(b.check, b.message) for b in self.baseline.findings}
-            problems += [f"New audit error — {f.check}: {f.message}" for f in final.findings
-                         if f.severity == "error" and (f.check, f.message) not in known]
+            problems += [f"New audit {f.severity} — {f.check}: {f.message}" for f in final.findings
+                         if f.severity in ("error", "warning") and f.check != "arabic-translation"
+                         and (f.check, f.message) not in known]
             problems += [f"Protected fact changed — {d}" for d in facts_diff(self.baseline.facts, final.facts)]
             problems += [f"Visible English text without an Arabic dictionary entry — {t}"
                          for t in final.untranslated if t not in self.baseline.untranslated]

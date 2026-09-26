@@ -203,6 +203,21 @@ def audit_page(result: AuditResult, page_path: Path, dist: Path, expected_url: s
     elif canonical_href != expected_url:
         result.add("error", "canonical", name, f"Canonical is {canonical_href!r}, expected {expected_url!r}.")
 
+    # hreflang only works when each language lives at its own URL; this page switches language in the browser.
+    languages_by_url: dict[str, list[str]] = {}
+    for link in head.find_all("link", rel="alternate", hreflang=True):
+        if link["hreflang"].lower() != "x-default":
+            languages_by_url.setdefault(link.get("href", ""), []).append(link["hreflang"])
+    for href, languages in languages_by_url.items():
+        if len(languages) > 1:
+            result.add("warning", "hreflang", name,
+                       f"hreflang {', '.join(languages)} all point to {href!r}; hreflang only helps when each "
+                       "language has its own URL. Remove these tags or publish a separate page per language.")
+    has_other_language_url = any(href != expected_url for href in languages_by_url)
+    if head.find("meta", property="og:locale:alternate") and not has_other_language_url:
+        result.add("warning", "og-locale", name,
+                   "og:locale:alternate declares another language version, but no other language has its own URL.")
+
     og = {m.get("property"): (m.get("content") or "") for m in head.find_all("meta", property=True)}
     for prop in REQUIRED_OG:
         if not og.get(prop):
