@@ -1,13 +1,15 @@
-"""SEO agent: a Claude tool-use loop that audits and improves site/, then writes a pull-request report.
+"""SEO agent: a MiniMax tool-calling loop that audits and improves site/, then writes a pull-request report.
+
+Uses MiniMax's OpenAI-compatible Chat Completions API.
 
 Usage: python -m seo_agent [--report seo-report.md] [--title-file seo-title.txt] [--dry-run]
 
 Environment:
-  ANTHROPIC_API_KEY          API key (required unless --dry-run)
-  SEO_AGENT_MODEL            model id (default: claude-opus-5)
-  SEO_AGENT_EFFORT           low | medium | high | xhigh | max (default: high)
+  MINIMAX_API_KEY            API key (required unless --dry-run)
+  MINIMAX_BASE_URL           API base URL (default: https://api.minimax.io/v1;
+                             mainland China accounts: https://api.minimaxi.com/v1)
+  SEO_AGENT_MODEL            model id (default: MiniMax-M3)
   SEO_AGENT_INSTRUCTIONS     optional extra focus for this run
-  SEO_AGENT_WEB_SEARCH       set to 0 to disable the web search tool
   SEO_AGENT_EXTRA_HOSTS      extra comma-separated hosts fetch_live_url may reach
 """
 
@@ -22,33 +24,31 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-import anthropic
+import openai
 
 from site_tools.audit import AuditResult
 from site_tools.build import ROOT, BuildError, load_site_url
 from seo_agent.workspace import SiteWorkspace, ToolError, extra_hosts_from_env
 
-DEFAULT_MODEL = "claude-opus-5"
-DEFAULT_EFFORT = "high"
-FALLBACK_BETA = "server-side-fallback-2026-07-01"
-MAX_TOKENS = 32_000
-RETRY_MAX_TOKENS = 64_000
+DEFAULT_MODEL = "MiniMax-M3"
+DEFAULT_BASE_URL = "https://api.minimax.io/v1"
 MAX_TURNS = 40
 MAX_REPORT_REJECTIONS = 2
-WEB_SEARCHES_PER_REQUEST = 3
 INSTRUCTIONS = (Path(__file__).parent / "instructions.md").read_text(encoding="utf-8")
 
 
 def _tool(name: str, description: str, properties: dict, required: list[str]) -> dict:
     return {
-        "name": name,
-        "description": description,
-        "input_schema": {"type": "object", "properties": properties, "required": required, "additionalProperties": False},
-        "eager_input_streaming": True,
+        "type": "function",
+        "function": {
+            "name": name,
+            "description": description,
+            "parameters": {"type": "object", "properties": properties, "required": required, "additionalProperties": False},
+        },
     }
 
 
-CLIENT_TOOLS = [
+TOOLS = [
     _tool("list_site_files", "List every file in site/ with its size in bytes.", {}, []),
     _tool(
         "read_site_file",
@@ -108,6 +108,7 @@ CLIENT_TOOLS = [
         ["title", "summary"],
     ),
 ]
+_SCHEMAS = {tool["function"]["name"]: tool["function"]["parameters"] for tool in TOOLS}
 _PY_TYPES = {"string": str, "integer": int}
 
 
@@ -118,20 +119,14 @@ class AgentError(Exception):
 @dataclass
 class Usage:
     requests: int = 0
-    input_tokens: int = 0
-    output_tokens: int = 0
-    cache_read_tokens: int = 0
-    cache_write_tokens: int = 0
-    web_searches: int = 0
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
 
     def add(self, usage) -> None:
         self.requests += 1
-        self.input_tokens += usage.input_tokens or 0
-        self.output_tokens += usage.output_tokens or 0
-        self.cache_read_tokens += usage.cache_read_input_tokens or 0
-        self.cache_write_tokens += usage.cache_creation_input_tokens or 0
-        if usage.server_tool_use is not None:
-            self.web_searches += usage.server_tool_use.web_search_requests or 0
+        if usage is not None:
+            self.prompt_tokens += usage.prompt_tokens or 0
+            self.completion_tokens += usage.completion_tokens or 0
 
 
 @dataclass
@@ -144,39 +139,36 @@ class Outcome:
     usage: Usage = field(default_factory=Usage)
 
 
-def validate_input(tool: dict, data) -> str | None:
-    """Return an error message if `data` does not match the tool's schema (eager streaming skips server validation)."""
-    schema = tool["input_schema"]
+def validate_input(schema: dict, data) -> str | None:
+    """Return an error message if `data` does not match the tool's parameter schema."""
     if not isinstance(data, dict):
-        return "input must be a JSON object"
+        return "arguments must be a JSON object"
     unknown = set(data) - set(schema["properties"])
     if unknown:
-        return f"unknown field(s): {sorted(unknown)}"
+        return f"unknown argument(s): {sorted(unknown)}"
     for key in schema["required"]:
         if key not in data:
-            return f"missing required field {key!r}"
+            return f"missing required argument {key!r}"
     for key, value in data.items():
         expected = _PY_TYPES[schema["properties"][key]["type"]]
         if not isinstance(value, expected) or isinstance(value, bool):
-            return f"field {key!r} must be of type {schema['properties'][key]['type']}"
+            return f"argument {key!r} must be of type {schema['properties'][key]['type']}"
     return None
 
 
-def echo_content(content: list) -> list:
-    """Assistant content to send back. After a server-side fallback, drop the declined model's
-    non-text blocks that precede the last fallback boundary (see the refusal/fallback docs)."""
-    boundary = max((i for i, block in enumerate(content) if block.type == "fallback"), default=None)
-    if boundary is None:
-        return list(content)
-    before = content[:boundary]
-    answered = {getattr(b, "tool_use_id", None) for b in before if b.type.endswith("_tool_result") and b.type != "tool_result"}
-    kept = [
-        b for b in before
-        if b.type == "text"
-        or (b.type == "server_tool_use" and b.id in answered)
-        or (b.type.endswith("_tool_result") and b.type != "tool_result")
-    ]
-    return kept + list(content[boundary + 1:])
+def assistant_turn(message) -> dict:
+    """The assistant message to keep in history. MiniMax requires the complete message, including
+    reasoning_details (the model's interleaved thinking), to be sent back on the next request."""
+    turn: dict = {"role": "assistant", "content": message.content or ""}
+    if message.tool_calls:
+        turn["tool_calls"] = [
+            {"id": call.id, "type": "function", "function": {"name": call.function.name, "arguments": call.function.arguments}}
+            for call in message.tool_calls
+        ]
+    reasoning = getattr(message, "reasoning_details", None)
+    if reasoning:
+        turn["reasoning_details"] = reasoning
+    return turn
 
 
 def facts_diff(before: dict, after: dict) -> list[str]:
@@ -184,24 +176,14 @@ def facts_diff(before: dict, after: dict) -> list[str]:
 
 
 class SeoAgent:
-    def __init__(self, client: anthropic.Anthropic, workspace: SiteWorkspace, *, model: str, effort: str,
-                 web_search: bool, extra_instructions: str = "", max_turns: int = MAX_TURNS):
+    def __init__(self, client, workspace: SiteWorkspace, *, model: str, extra_instructions: str = "",
+                 max_turns: int = MAX_TURNS):
         self.client = client
         self.workspace = workspace
         self.model = model
-        self.effort = effort
         self.max_turns = max_turns
         self.extra_instructions = extra_instructions.strip()
         self.usage = Usage()
-        self.tools: list[dict] = list(CLIENT_TOOLS)
-        if web_search:
-            self.tools.append({
-                "type": "web_search_20260209",
-                "name": "web_search",
-                "max_uses": WEB_SEARCHES_PER_REQUEST,
-                "user_location": {"type": "approximate", "city": "Dubai", "country": "AE", "timezone": "Asia/Dubai"},
-            })
-        self.tools_by_name = {tool["name"]: tool for tool in CLIENT_TOOLS}
         self.baseline = workspace.build_and_audit()
         self.snapshot_before = workspace.snapshot()
         self.rejections = 0
@@ -224,70 +206,48 @@ class SeoAgent:
         parts.append("Run your SEO pass now.")
         return "\n\n".join(parts)
 
-    # ----- model calls ------------------------------------------------------------------------
-
-    def _call(self, messages: list, max_tokens: int):
-        request = dict(
-            model=self.model,
-            max_tokens=max_tokens,
-            system=INSTRUCTIONS,
-            tools=self.tools,
-            messages=messages,
-            thinking={"type": "adaptive"},
-            output_config={"effort": self.effort},
-            cache_control={"type": "ephemeral"},
-            betas=[FALLBACK_BETA],
-            fallbacks="default",
-        )
-        for attempt in range(3):
-            try:
-                with self.client.beta.messages.stream(**request) as stream:
-                    return stream.get_final_message()
-            except anthropic.APIError:
-                raise
-            except ValueError as error:  # unparseable eagerly-streamed tool input: re-issue the request
-                if attempt == 2:
-                    raise AgentError(f"model produced unparseable tool input three times: {error}") from error
-        raise AssertionError("unreachable")
-
     # ----- tool execution ---------------------------------------------------------------------
 
-    def _execute(self, block) -> tuple[dict, Outcome | None]:
+    def _execute(self, call) -> tuple[dict, Outcome | None]:
         def result(content: str, is_error: bool = False) -> dict:
-            return {"type": "tool_result", "tool_use_id": block.id, "content": content, "is_error": is_error}
+            return {"role": "tool", "tool_call_id": call.id, "content": ("ERROR: " + content) if is_error else content}
 
-        tool = self.tools_by_name.get(block.name)
-        if tool is None:
-            return result(f"Unknown tool {block.name!r}.", True), None
-        problem = validate_input(tool, block.input)
+        name = call.function.name
+        schema = _SCHEMAS.get(name)
+        if schema is None:
+            return result(f"Unknown tool {name!r}.", True), None
+        try:
+            args = json.loads(call.function.arguments or "{}")
+        except json.JSONDecodeError:
+            return result(json.dumps({"INVALID_JSON": call.function.arguments}, ensure_ascii=False), True), None
+        problem = validate_input(schema, args)
         if problem:
-            return result(json.dumps({"INVALID_INPUT": problem, "received": block.input}, ensure_ascii=False), True), None
+            return result(json.dumps({"INVALID_INPUT": problem, "received": args}, ensure_ascii=False), True), None
 
-        args = block.input
         ws = self.workspace
         try:
-            if block.name == "list_site_files":
+            if name == "list_site_files":
                 return result(ws.list_files()), None
-            if block.name == "read_site_file":
+            if name == "read_site_file":
                 return result(ws.read_file(args["path"], args.get("start_line"), args.get("end_line"))), None
-            if block.name == "edit_site_file":
+            if name == "edit_site_file":
                 return result(ws.edit_file(args["path"], args["old_string"], args["new_string"])), None
-            if block.name == "create_site_file":
+            if name == "create_site_file":
                 return result(ws.create_file(args["path"], args["content"])), None
-            if block.name == "fetch_live_url":
+            if name == "fetch_live_url":
                 return result(ws.fetch_live(args["url"])), None
-            if block.name == "run_seo_audit":
+            if name == "run_seo_audit":
                 current = ws.build_and_audit()
                 return result(current.to_markdown() + "\nProtected facts: " + json.dumps(current.facts, ensure_ascii=False)), None
-            if block.name == "submit_report":
-                return self._submit(block, args, result)
+            if name == "submit_report":
+                return self._submit(args, result)
         except BuildError as error:
             return result(f"Build failed: {error}", True), None
         except ToolError as error:
             return result(str(error), True), None
-        raise AssertionError(f"unhandled tool {block.name}")
+        raise AssertionError(f"unhandled tool {name}")
 
-    def _submit(self, block, args: dict, result) -> tuple[dict, Outcome | None]:
+    def _submit(self, args: dict, result) -> tuple[dict, Outcome | None]:
         problems: list[str] = []
         try:
             final = self.workspace.build_and_audit()
@@ -295,12 +255,12 @@ class SeoAgent:
             final = None
             problems.append(f"The build fails: {error}")
         if final is not None:
-            new_errors = [f"{f.check}: {f.message}" for f in final.findings if f.severity == "error"
-                          and (f.check, f.message) not in {(b.check, b.message) for b in self.baseline.findings}]
-            problems += [f"New audit error — {e}" for e in new_errors]
+            known = {(b.check, b.message) for b in self.baseline.findings}
+            problems += [f"New audit error — {f.check}: {f.message}" for f in final.findings
+                         if f.severity == "error" and (f.check, f.message) not in known]
             problems += [f"Protected fact changed — {d}" for d in facts_diff(self.baseline.facts, final.facts)]
-            new_untranslated = [t for t in final.untranslated if t not in self.baseline.untranslated]
-            problems += [f"Visible English text without an Arabic dictionary entry — {t}" for t in new_untranslated]
+            problems += [f"Visible English text without an Arabic dictionary entry — {t}"
+                         for t in final.untranslated if t not in self.baseline.untranslated]
         if not args["title"].strip() or not args["summary"].strip():
             problems.append("title and summary must be non-empty")
 
@@ -318,43 +278,41 @@ class SeoAgent:
     # ----- loop -------------------------------------------------------------------------------
 
     def run(self) -> Outcome:
-        messages: list = [{"role": "user", "content": self.kickoff()}]
-        max_tokens = MAX_TOKENS
+        messages: list[dict] = [
+            {"role": "system", "content": INSTRUCTIONS},
+            {"role": "user", "content": self.kickoff()},
+        ]
         nudged = False
         for _ in range(self.max_turns):
-            response = self._call(messages, max_tokens)
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                tools=TOOLS,
+                extra_body={"reasoning_split": True},  # thinking arrives in reasoning_details, not in content
+            )
             self.usage.add(response.usage)
+            choice = response.choices[0]
+            if choice.finish_reason == "length":
+                raise AgentError("the model's reply was cut off (finish_reason=length); no truncated tool call was run")
+            if choice.finish_reason == "content_filter":
+                raise AgentError("the model's reply was blocked by the provider's content filter")
 
-            if response.stop_reason == "refusal":
-                details = getattr(response, "stop_details", None)
-                raise AgentError(f"model declined the request (category: {getattr(details, 'category', None)})")
-            if response.stop_reason == "max_tokens":
-                if max_tokens >= RETRY_MAX_TOKENS:
-                    raise AgentError("response hit max_tokens even at the retry limit")
-                max_tokens = RETRY_MAX_TOKENS  # re-issue the same request with more room; never run truncated tools
-                continue
-
-            content = echo_content(response.content)
-            messages.append({"role": "assistant", "content": content})
-            if response.stop_reason == "pause_turn":
-                continue  # server tool (web search) paused mid-turn; resend to let it continue
-
-            tool_uses = [block for block in content if block.type == "tool_use"]
-            if not tool_uses:
+            message = choice.message
+            messages.append(assistant_turn(message))
+            if not message.tool_calls:
                 if nudged:
                     raise AgentError("model ended without calling submit_report")
                 nudged = True
                 messages.append({"role": "user", "content": "Finish by calling submit_report."})
                 continue
 
-            results, outcome = [], None
-            for block in tool_uses:
-                tool_result, done = self._execute(block)
-                results.append(tool_result)
+            outcome = None
+            for call in message.tool_calls:
+                tool_result, done = self._execute(call)
+                messages.append(tool_result)
                 outcome = outcome or done
             if outcome is not None:
                 return outcome
-            messages.append({"role": "user", "content": results})
         raise AgentError(f"no accepted report after {self.max_turns} turns")
 
 
@@ -374,8 +332,7 @@ def render_report(outcome: Outcome, model: str) -> str:
         "",
         "Changed files: " + (", ".join(f"`site/{p}`" for p in outcome.changed_files) or "none"),
         "",
-        f"Run: {model}, {u.requests} API requests, {u.input_tokens:,} input + {u.cache_read_tokens:,} cache-read + "
-        f"{u.cache_write_tokens:,} cache-write input tokens, {u.output_tokens:,} output tokens, {u.web_searches} web searches.",
+        f"Run: {model}, {u.requests} API requests, {u.prompt_tokens:,} prompt tokens, {u.completion_tokens:,} completion tokens.",
     ]
     server, repo, run_id = (os.environ.get(k) for k in ("GITHUB_SERVER_URL", "GITHUB_REPOSITORY", "GITHUB_RUN_ID"))
     if server and repo and run_id:
@@ -393,18 +350,18 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     model = os.environ.get("SEO_AGENT_MODEL") or DEFAULT_MODEL
-    effort = os.environ.get("SEO_AGENT_EFFORT") or DEFAULT_EFFORT
+    client = None
+    if not args.dry_run:
+        api_key = os.environ.get("MINIMAX_API_KEY", "").strip()
+        if not api_key:
+            print("SEO agent stopped: MINIMAX_API_KEY is not set.", file=sys.stderr)
+            return 2
+        client = openai.OpenAI(api_key=api_key, base_url=os.environ.get("MINIMAX_BASE_URL") or DEFAULT_BASE_URL,
+                               max_retries=4)
     try:
         workspace = SiteWorkspace(ROOT, load_site_url(ROOT / "site.config.json"), extra_hosts_from_env())
-        agent = SeoAgent(
-            anthropic.Anthropic(max_retries=4) if not args.dry_run else None,
-            workspace,
-            model=model,
-            effort=effort,
-            web_search=os.environ.get("SEO_AGENT_WEB_SEARCH", "1") != "0",
-            extra_instructions=os.environ.get("SEO_AGENT_INSTRUCTIONS", ""),
-            max_turns=args.max_turns,
-        )
+        agent = SeoAgent(client, workspace, model=model,
+                         extra_instructions=os.environ.get("SEO_AGENT_INSTRUCTIONS", ""), max_turns=args.max_turns)
     except BuildError as error:
         print(f"SEO agent stopped: the current site does not build: {error}", file=sys.stderr)
         return 2
@@ -417,14 +374,13 @@ def main(argv: list[str] | None = None) -> int:
     except AgentError as error:
         print(f"SEO agent stopped: {error}", file=sys.stderr)
         return 2
-    except anthropic.AuthenticationError:
-        print("SEO agent stopped: ANTHROPIC_API_KEY is missing or invalid.", file=sys.stderr)
+    except openai.AuthenticationError:
+        print("SEO agent stopped: MINIMAX_API_KEY was rejected by the API.", file=sys.stderr)
         return 2
-    except anthropic.APIStatusError as error:
-        print(f"SEO agent stopped: API error {error.status_code} (request id {error.request_id}): {error.message}",
-              file=sys.stderr)
+    except openai.APIStatusError as error:
+        print(f"SEO agent stopped: API error {error.status_code}: {error.message}", file=sys.stderr)
         return 2
-    except anthropic.APIConnectionError as error:
+    except openai.APIConnectionError as error:
         print(f"SEO agent stopped: could not reach the API: {error}", file=sys.stderr)
         return 2
 
