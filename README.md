@@ -66,6 +66,8 @@ Every Monday at 09:17 Dubai time (or on demand: **Actions → SEO agent → Run 
 
 No pull request is opened when there is nothing worth changing, and a run is skipped while a previous SEO pull request is still open. Each pull request lists the tokens the run used.
 
+To run it again, always start a new run (**Run workflow**). **Re-run** on an old run is refused, because it would replay the code from that run's commit.
+
 The agent calls MiniMax's OpenAI-compatible Chat Completions API (`MiniMax-M3` by default) with `reasoning_split` enabled, and sends the model's reasoning back with each step as MiniMax requires for multi-step tool use.
 
 ## Local development
