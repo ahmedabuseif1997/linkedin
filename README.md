@@ -14,7 +14,7 @@ Bilingual (English/Arabic) executive portfolio, published at **https://ahmedabou
 | `.github/workflows/site.yml` | On pull requests: tests, build, audit. On `main`: the same, then deploy to GitHub Pages. |
 | `.github/workflows/seo-agent.yml` | Weekly SEO agent run that opens a pull request for review. |
 | `tests/` | Tests for the build, the audit, the agent's sandbox, and the agent loop. |
-| `971labs/` | Standalone bilingual website for 971 Labs, a Dubai software studio. Not deployed by the Site workflow; see `971labs/README.md`. |
+| `971labs/` | Standalone website for 971 Labs, a Dubai digital product and engineering studio. Not deployed by the Site workflow; see `971labs/README.md`. |
 
 ## One-time setup
 
