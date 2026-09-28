@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title data-i18n="meta.title">Falaj Labs · Software engineering studio in Dubai</title>
-<meta name="description" content="Falaj Labs is a software engineering studio in Dubai. We design, build and run web platforms, mobile apps and AI systems in Arabic and English." data-i18n-attr="content:meta.description">
+<title data-i18n="meta.title">971 Labs · Software engineering studio in Dubai</title>
+<meta name="description" content="971 Labs is a software engineering studio in Dubai. We design, build and run web platforms, mobile apps and AI systems in Arabic and English." data-i18n-attr="content:meta.description">
 <meta name="theme-color" content="#0E1417">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Falaj Labs">
-<meta property="og:title" content="Falaj Labs · Software engineering studio in Dubai">
+<meta property="og:site_name" content="971 Labs">
+<meta property="og:title" content="971 Labs · Software engineering studio in Dubai">
 <meta property="og:description" content="Web platforms, mobile apps and AI systems, built in Dubai in Arabic and English.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -87,7 +87,7 @@
   :root[lang="ar"] .h3 { font-weight: 500; line-height: 1.5; letter-spacing: 0; }
   .lead { margin: 1.5rem 0 0; max-width: 56ch; color: var(--muted); font-size: clamp(1.08rem, 1.35vw, 1.22rem); text-wrap: pretty; }
 
-  /* The recurring mark: a channel hairline that ends in a sluice gate */
+  /* The recurring mark: a hairline that ends in a short upright bar */
   .eyebrow {
     display: flex; align-items: center; gap: .8rem; margin: 0 0 1.4rem;
     font: 500 .75rem/1.4 var(--font-mono); letter-spacing: var(--track); text-transform: uppercase; color: var(--brass);
@@ -255,7 +255,8 @@
   /* Studio */
   .studio-grid { display: grid; gap: clamp(40px, 6vw, 96px); }
   @media (min-width: 1000px) { .studio-grid { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); } }
-  .word { margin: 0; font-family: var(--font-arabic-display); font-weight: 500; font-size: clamp(7rem, 17vw, 12.5rem); line-height: 1.1; color: var(--brass); }
+  .word { margin: 0; font-family: "Gloock", Georgia, "Times New Roman", serif; font-size: clamp(5.5rem, 14vw, 10.5rem); line-height: 1; letter-spacing: -.04em; color: var(--brass); }
+  [dir="rtl"] .word { text-align: right; }
   .def { margin: 1.25rem 0 0; max-width: 34ch; padding-top: 1rem; border-top: 1px solid var(--line); font: 400 .85rem/1.7 var(--font-mono); color: var(--muted); }
   :root[lang="ar"] .def { font-family: var(--font-body); font-size: .95rem; }
   .story { margin: 1.6rem 0 0; max-width: 40ch; font-family: var(--font-display); font-size: clamp(1.3rem, 2.1vw, 1.7rem); line-height: 1.42; color: var(--text); }
@@ -349,9 +350,9 @@
 
 <header class="site-header" id="top">
   <div class="wrap bar">
-    <a class="brand" href="#top" aria-label="Falaj Labs home" data-i18n-attr="aria-label:brand.home" translate="no">
-      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 5v9M16 14c0 6-8 5-8 13M16 14v13M16 14c0 6 8 5 8 13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
-      <span data-i18n="brand">Falaj Labs</span>
+    <a class="brand" href="#top" aria-label="971 Labs home" data-i18n-attr="aria-label:brand.home" translate="no">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 6.5v19M6.5 16h19" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="square"/></svg>
+      <span data-i18n="brand">971 Labs</span>
     </a>
     <nav class="nav" id="primary-nav" aria-label="Primary" data-i18n-attr="aria-label:nav.label">
       <a href="#services" data-i18n="nav.services">Services</a>
@@ -376,7 +377,7 @@
         <div>
           <p class="eyebrow" data-i18n="hero.eyebrow">Software engineering studio · Dubai</p>
           <h1 class="h1" id="hero-title" data-i18n="hero.title">Software for the Emirates, built in Arabic and English from the first line.</h1>
-          <p class="lead" data-i18n="hero.lead">Falaj Labs is a senior engineering studio in Dubai. We design, build and run web platforms, mobile apps and AI systems for companies that need them to work properly for years.</p>
+          <p class="lead" data-i18n="hero.lead">971 Labs is a senior engineering studio in Dubai. We design, build and run web platforms, mobile apps and AI systems for companies that need them to work properly for years.</p>
           <div class="hero-ctas">
             <a class="btn btn-primary" href="#contact"><span data-i18n="cta.start">Start a project</span><span class="arrow" aria-hidden="true">→</span></a>
             <a class="btn btn-ghost" href="#services" data-i18n="hero.cta2">See what we build</a>
@@ -530,13 +531,13 @@ now.toLocaleDateString(<span class="s">'ar-AE-u-ca-islamic-umalqura'</span>, {
   <section class="section" id="studio" aria-labelledby="studio-title">
     <div class="wrap studio-grid">
       <div>
-        <p class="word" lang="ar" dir="rtl" aria-hidden="true" translate="no">فلج</p>
-        <p class="def" data-i18n="studio.def">falaj · noun · a channel that carries water across the desert to where it is needed. Plural: aflaj.</p>
+        <p class="word" dir="ltr" aria-hidden="true" translate="no">+971</p>
+        <p class="def" data-i18n="studio.def">+971 · country calling code · United Arab Emirates</p>
       </div>
       <div>
         <p class="eyebrow" data-i18n="studio.eyebrow">Studio</p>
-        <h2 class="h2" id="studio-title" data-i18n="studio.title">Named after engineering that still runs.</h2>
-        <p class="story" data-i18n="studio.story">For centuries, aflaj carried water through the desert to the farms and towns of what is now the UAE and Oman. The best were built so carefully that some still run today. We hold our software to the same standard. It should be well made, easy to maintain, and still working long after launch.</p>
+        <h2 class="h2" id="studio-title" data-i18n="studio.title">Engineered in +971.</h2>
+        <p class="story" data-i18n="studio.story">We named the studio after the code at the start of every UAE phone number, because it says where we work and who we build for. Our engineers are in Dubai, our projects run on Dubai time, and the software we ship is made for people who switch between Arabic and English every day.</p>
 
         <div class="principles">
           <div class="principle">
@@ -629,7 +630,7 @@ now.toLocaleDateString(<span class="s">'ar-AE-u-ca-islamic-umalqura'</span>, {
             <dt data-i18n="contact.email.k">Email</dt>
             <dd>
               <span class="email-row">
-                <span class="email" id="email" translate="no">hello@falajlabs.ae</span>
+                <span class="email" id="email" translate="no">hello@971labs.ae</span>
                 <button class="btn btn-ghost btn-sm" id="copy-email" type="button" aria-label="Copy email address" data-i18n="contact.copy" data-i18n-attr="aria-label:contact.copy.aria">Copy</button>
               </span>
               <p class="copy-status" id="email-status" aria-live="polite"></p>
@@ -704,7 +705,7 @@ now.toLocaleDateString(<span class="s">'ar-AE-u-ca-islamic-umalqura'</span>, {
             <textarea id="brief-text" readonly></textarea>
           </label>
           <div class="brief-actions">
-            <a class="btn btn-primary" id="brief-mail" href="mailto:hello@falajlabs.ae" data-i18n="brief.send">Email it to us</a>
+            <a class="btn btn-primary" id="brief-mail" href="mailto:hello@971labs.ae" data-i18n="brief.send">Email it to us</a>
             <button class="btn btn-ghost" id="brief-copy" type="button" data-i18n="brief.copy">Copy brief</button>
           </div>
           <p class="copy-status" id="brief-status" aria-live="polite"></p>
@@ -716,7 +717,7 @@ now.toLocaleDateString(<span class="s">'ar-AE-u-ca-islamic-umalqura'</span>, {
 
 <footer class="site-footer">
   <div class="wrap foot">
-    <p data-i18n="footer.rights">© 2026 Falaj Labs. Dubai, United Arab Emirates.</p>
+    <p data-i18n="footer.rights">© 2026, 971 Labs. Dubai, United Arab Emirates.</p>
     <a href="#top" data-i18n="footer.top">Back to top</a>
   </div>
 </footer>
@@ -731,11 +732,11 @@ now.toLocaleDateString(<span class="s">'ar-AE-u-ca-islamic-umalqura'</span>, {
     "brief.subject": "Project brief: {who}"
   },
   "ar": {
-    "meta.title": "فلج لابز · استوديو هندسة برمجيات في دبي",
-    "meta.description": "فلج لابز استوديو هندسة برمجيات في دبي. نصمّم ونبني ونشغّل المنصات الإلكترونية وتطبيقات الجوال وأنظمة الذكاء الاصطناعي بالعربية والإنجليزية.",
+    "meta.title": "971 لابز · استوديو هندسة برمجيات في دبي",
+    "meta.description": "971 لابز استوديو هندسة برمجيات في دبي. نصمّم ونبني ونشغّل المنصات الإلكترونية وتطبيقات الجوال وأنظمة الذكاء الاصطناعي بالعربية والإنجليزية.",
     "skip": "انتقل إلى المحتوى",
-    "brand": "فلج لابز",
-    "brand.home": "الصفحة الرئيسية لفلج لابز",
+    "brand": "971 لابز",
+    "brand.home": "الصفحة الرئيسية لـ 971 لابز",
     "nav.label": "التنقل الرئيسي",
     "nav.services": "الخدمات",
     "nav.process": "منهجية العمل",
@@ -749,7 +750,7 @@ now.toLocaleDateString(<span class="s">'ar-AE-u-ca-islamic-umalqura'</span>, {
 
     "hero.eyebrow": "استوديو هندسة برمجيات · دبي",
     "hero.title": "برمجيات للإمارات، تُبنى بالعربية والإنجليزية من السطر الأول.",
-    "hero.lead": "فلج لابز استوديو هندسة برمجيات في دبي يضمّ مهندسين ذوي خبرة. نصمّم ونبني ونشغّل المنصات الإلكترونية وتطبيقات الجوال وأنظمة الذكاء الاصطناعي لشركات تحتاج إلى أنظمة تعمل بكفاءة لسنوات.",
+    "hero.lead": "971 لابز استوديو هندسة برمجيات في دبي يضمّ مهندسين ذوي خبرة. نصمّم ونبني ونشغّل المنصات الإلكترونية وتطبيقات الجوال وأنظمة الذكاء الاصطناعي لشركات تحتاج إلى أنظمة تعمل بكفاءة لسنوات.",
     "hero.cta2": "تعرّف على ما نبنيه",
     "code.live": "يعمل الآن في متصفحك",
     "code.caption": "مخرجات حقيقية من متصفحك، تتحدّث كل ثانية.",
@@ -796,10 +797,10 @@ now.toLocaleDateString(<span class="s">'ar-AE-u-ca-islamic-umalqura'</span>, {
     "p4.t": "الإطلاق والتشغيل",
     "p4.d": "نطلق ما بنيناه ونراقبه وندعمه وفق أوقات استجابة متفق عليها، أو نسلّم كل شيء إلى فريقك.",
 
-    "studio.def": "فَلَج · اسم · قناة تنقل الماء عبر الصحراء إلى حيث يُحتاج إليه. الجمع: أفلاج.",
+    "studio.def": "⁦+971⁩ · رمز الاتصال الدولي · الإمارات العربية المتحدة",
     "studio.eyebrow": "عن الاستوديو",
-    "studio.title": "اسمٌ مستوحى من هندسة ما زالت تعمل.",
-    "studio.story": "على مدى قرون، حملت الأفلاج الماء عبر الصحراء إلى مزارع وبلدات ما يُعرف اليوم بالإمارات وعُمان. وقد بُنيت أفضلها بإتقان جعل بعضها يعمل حتى اليوم. ونلتزم في برمجياتنا بالمعيار نفسه: أن تكون متقنة الصنع، وسهلة الصيانة، وأن تظل تعمل بعد إطلاقها بوقت طويل.",
+    "studio.title": "مُصمَّم ومُطوَّر في ⁦+971⁩.",
+    "studio.story": "سمّينا الاستوديو باسم الرمز الذي يبدأ به كل رقم هاتف في الإمارات، لأنه يقول أين نعمل ولمن نبني. مهندسونا في دبي، ومشاريعنا تسير وفق توقيت دبي، والبرمجيات التي نطلقها مصمَّمة لأناس ينتقلون بين العربية والإنجليزية كل يوم.",
     "pr1.t": "العربية منذ المسودة الأولى",
     "pr1.d": "نصمّم كل شاشة للاتجاهين معًا، من اليمين إلى اليسار ومن اليسار إلى اليمين، ونختار الخط العربي بالعناية نفسها التي نختار بها الخط الإنجليزي.",
     "pr2.t": "كل شيء ملكٌ لك",
@@ -869,7 +870,7 @@ now.toLocaleDateString(<span class="s">'ar-AE-u-ca-islamic-umalqura'</span>, {
     "brief.send": "أرسله إلينا بالبريد",
     "brief.copy": "انسخ الملخص",
 
-    "footer.rights": "© 2026 فلج لابز. دبي، الإمارات العربية المتحدة.",
+    "footer.rights": "© 2026، 971 لابز. دبي، الإمارات العربية المتحدة.",
     "footer.top": "العودة إلى الأعلى",
 
     "clock.open": "الاستوديو مفتوح الآن",
@@ -884,7 +885,7 @@ now.toLocaleDateString(<span class="s">'ar-AE-u-ca-islamic-umalqura'</span>, {
 (() => {
   "use strict";
 
-  const EMAIL = "hello@falajlabs.ae";
+  const EMAIL = "hello@971labs.ae";
   const root = document.documentElement;
   const strings = JSON.parse(document.getElementById("i18n").textContent);
   const $ = (id) => document.getElementById(id);
@@ -920,7 +921,7 @@ now.toLocaleDateString(<span class="s">'ar-AE-u-ca-islamic-umalqura'</span>, {
       el.setAttribute(attr, lang === "ar" && arabic ? arabic : english);
     }));
     $("lang-btn").lang = lang === "ar" ? "en" : "ar";
-    if (remember) store.set("falaj-lang", lang);
+    if (remember) store.set("971labs-lang", lang);
     tick();
     if (!$("brief").hidden) writeBrief();
   }
@@ -1028,8 +1029,8 @@ now.toLocaleDateString(<span class="s">'ar-AE-u-ca-islamic-umalqura'</span>, {
   });
   $("brief-copy").addEventListener("click", () => copy($("brief-text").value, $("brief-status"), $("brief-text")));
 
-  /* ---------- Hero: water channels branching across the desert ---------- */
-  function channels() {
+  /* ---------- Hero: network lines branching across the page ---------- */
+  function network() {
     const canvas = $("flow");
     const hero = canvas.parentElement;
     const ctx = canvas.getContext && canvas.getContext("2d");
@@ -1133,10 +1134,10 @@ now.toLocaleDateString(<span class="s">'ar-AE-u-ca-islamic-umalqura'</span>, {
   }
 
   /* ---------- Start ---------- */
-  const requested = location.hash === "#ar" ? "ar" : store.get("falaj-lang");
+  const requested = location.hash === "#ar" ? "ar" : store.get("971labs-lang");
   setLang(requested === "ar" ? "ar" : "en", false);
   setInterval(tick, 1000);
-  channels();
+  network();
 })();
 </script>
 </body>

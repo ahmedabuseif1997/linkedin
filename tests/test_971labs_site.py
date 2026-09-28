@@ -1,4 +1,4 @@
-"""Checks for the standalone Falaj Labs company site in falaj/.
+"""Checks for the standalone 971 Labs company site in 971labs/.
 
 The page ships English in the markup and Arabic in a JSON dictionary
 (<script id="i18n">). These tests keep the two in step.
@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 from bs4 import BeautifulSoup
 
-PAGE = Path(__file__).resolve().parent.parent / "falaj" / "index.html"
+PAGE = Path(__file__).resolve().parent.parent / "971labs" / "index.html"
 
 
 @pytest.fixture(scope="module")
