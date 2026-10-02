@@ -24,7 +24,7 @@ python -m http.server -d 1997labs/site 8002   # then open http://localhost:8002
 ## Before going live
 
 1. Approve the preview.
-2. Create the new GitHub repository and enable Pages (Claude can do this after approval).
+2. Create the new GitHub repository `1997labs` and put the contents of this `1997labs/` folder at its root (including `.github/workflows/pages.yml`, which publishes `site/` on every push to `main`). Then enable Pages: Settings → Pages → Source: GitHub Actions.
 3. Point `1997labs.com` at GitHub Pages at your registrar: four `A` records on `@` (`185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153`) and a `CNAME` record for `www` to `<your-user>.github.io`. Remove the records that point the domain elsewhere today.
 4. Have the privacy notice reviewed by someone qualified in UAE data protection (Federal Decree-Law 45/2021) before launch.
 5. Later: add GA4 and Clarity IDs (`ANALYTICS-SETUP.md`), connect the form to a form service or CRM, and add the Arabic version.
