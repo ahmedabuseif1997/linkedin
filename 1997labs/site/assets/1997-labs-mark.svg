@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title desc">
+  <title id="title">1997 Labs monogram</title>
+  <desc id="desc">A modular 1997 monogram inspired by late-nineties digital displays.</desc>
+  <defs>
+    <linearGradient id="ice" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#b9c4c7"/></linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <path d="M27 8H8v19M69 8h19v19M8 69v19h19M88 69v19H69" fill="none" stroke="#b8ff3d" stroke-width="2" opacity=".9"/>
+  <path d="M48 15v66M15 48h66" fill="none" stroke="#d9e4e6" stroke-width="1" opacity=".22"/>
+  <g font-family="Arial Black,Arial,sans-serif" font-size="31" font-weight="900" text-anchor="middle" filter="url(#glow)">
+    <text x="30" y="42" fill="url(#ice)">1</text><text x="66" y="42" fill="url(#ice)">9</text>
+    <text x="30" y="76" fill="url(#ice)">9</text><text x="66" y="76" fill="#b8ff3d">7</text>
+  </g>
+  <circle cx="88" cy="48" r="2.5" fill="#b8ff3d"/>
+</svg>
